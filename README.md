@@ -14,23 +14,23 @@ A powerful command-line tool for automatically removing comments from code in mu
 
 ## Supported Programming Languages
 
-| Language | File Extensions | Comment Types |
-|----------|----------------|---------------|
-| C | `.c`, `.h` | `//` and `/* */` |
-| C++ | `.cpp`, `.cc`, `.cxx`, `.hpp`, `.hxx` | `//` and `/* */` |
-| Java | `.java` | `//` and `/* */` |
-| JavaScript | `.js`, `.jsx` | `//` and `/* */` |
-| TypeScript | `.ts`, `.tsx` | `//` and `/* */` |
-| Python | `.py`, `.pyw` | `#` and `"""..."""` / `'''...'''` |
-| HTML | `.html`, `.htm` | `<!-- -->` |
-| CSS | `.css` | `/* */` |
+| Language   | File Extensions                                 | Comment Types                           |
+| ---------- | ----------------------------------------------- | --------------------------------------- |
+| C          | `.c`, `.h`                                  | `//` and `/* */`                    |
+| C++        | `.cpp`, `.cc`, `.cxx`, `.hpp`, `.hxx` | `//` and `/* */`                    |
+| Java       | `.java`                                       | `//` and `/* */`                    |
+| JavaScript | `.js`, `.jsx`                               | `//` and `/* */`                    |
+| TypeScript | `.ts`, `.tsx`                               | `//` and `/* */`                    |
+| Python     | `.py`, `.pyw`                               | `#` and `"""..."""` / `'''...'''` |
+| HTML       | `.html`, `.htm`                             | `<!-- -->`                            |
+| CSS        | `.css`                                        | `/* */`                               |
 
 ## Installation
 
 ### Build from source
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/cyber-tao/CommentsCleaner.git
 cd CommentsCleaner
 cargo build --release
 ```
@@ -119,18 +119,18 @@ cclean src/ -r -i -v
 
 ## Command-line Options
 
-| Option | Short | Description |
-|--------|-------|-------------|
-| `--output <PATH>` | `-o` | Specify output file or directory path |
-| `--recursive` | `-r` | Recursively process all files in directory |
-| `--in-place` | `-i` | Modify original file directly |
-| `--backup` | `-b` | Create backup file (.bak) |
-| `--lang <LANGUAGE>` | `-l` | Manually specify programming language |
-| `--verbose` | `-v` | Show detailed processing information |
-| `--dry-run` | | Dry run, do not actually modify files |
+| Option                 | Short  | Description                                          |
+| ---------------------- | ------ | ---------------------------------------------------- |
+| `--output <PATH>`    | `-o` | Specify output file or directory path                |
+| `--recursive`        | `-r` | Recursively process all files in directory           |
+| `--in-place`         | `-i` | Modify original file directly                        |
+| `--backup`           | `-b` | Create backup file (.bak)                            |
+| `--lang <LANGUAGE>`  | `-l` | Manually specify programming language                |
+| `--verbose`          | `-v` | Show detailed processing information                 |
+| `--dry-run`          |        | Dry run, do not actually modify files                |
 | `--extensions <EXT>` | `-e` | Specify file extensions to process (comma-separated) |
-| `--help` | `-h` | Show help information |
-| `--version` | `-V` | Show version information |
+| `--help`             | `-h` | Show help information                                |
+| `--version`          | `-V` | Show version information                             |
 
 ## Supported Language Identifiers
 
@@ -167,6 +167,7 @@ cclean ./src -r -i -b -v
 ```
 
 This will:
+
 - Recursively process src directory
 - Modify all files in-place
 - Create .bak backup for each file
@@ -190,6 +191,7 @@ cclean ./src -r -e "js,jsx" -o ./dist
 ### Whitespace Handling
 
 After removing comments, the tool will automatically:
+
 - Merge multiple consecutive empty lines into a single empty line
 - Keep code structure clear
 - Reduce file size
@@ -197,6 +199,7 @@ After removing comments, the tool will automatically:
 ### Smart Parsing
 
 The tool uses state machine parsing to correctly handle:
+
 - Comment symbols in strings (won't be deleted)
 - Escape characters
 - Multi-line strings
@@ -205,6 +208,7 @@ The tool uses state machine parsing to correctly handle:
 ### Important Notes
 
 **Python triple-quoted string handling**:
+
 - All triple-quoted strings (`"""..."""` and `'''...'''`) content will be cleared
 - Replaced with empty string `""` to maintain syntax correctness
 - Including docstrings
@@ -226,6 +230,7 @@ cargo run -- <arguments>
 ```
 
 Example:
+
 ```bash
 cargo run -- test.cpp -v
 ```
@@ -241,6 +246,7 @@ Issues and Pull Requests are welcome!
 ## Changelog
 
 ### v0.1.0
+
 - Initial version
 - Support for C/C++, Java, JavaScript, TypeScript, Python, HTML, CSS
 - Basic command-line arguments
