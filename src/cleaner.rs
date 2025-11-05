@@ -3,14 +3,16 @@ use regex::Regex;
 
 pub fn clean_comments(content: &str, language: Language) -> String {
     let cleaned = match language {
-        Language::C | Language::Cpp | Language::Java | Language::JavaScript | Language::TypeScript => {
-            clean_c_style_comments(content)
-        }
+        Language::C
+        | Language::Cpp
+        | Language::Java
+        | Language::JavaScript
+        | Language::TypeScript => clean_c_style_comments(content),
         Language::Python => clean_python_comments(content),
         Language::Html => clean_html_comments(content),
         Language::Css => clean_css_comments(content),
     };
-    
+
     clean_empty_lines(&cleaned)
 }
 
@@ -18,10 +20,10 @@ fn clean_empty_lines(content: &str) -> String {
     let lines: Vec<&str> = content.lines().collect();
     let mut result = Vec::new();
     let mut prev_empty = false;
-    
+
     for line in lines {
         let is_empty = line.trim().is_empty();
-        
+
         if is_empty {
             if !prev_empty {
                 result.push(line);
@@ -32,7 +34,7 @@ fn clean_empty_lines(content: &str) -> String {
             prev_empty = false;
         }
     }
-    
+
     let mut output = result.join("\n");
     if content.ends_with('\n') {
         output.push('\n');
@@ -144,17 +146,17 @@ fn clean_python_comments(content: &str) -> String {
             if ch == '"' || ch == '\'' {
                 let quote = ch;
                 let mut count = 1;
-                
+
                 if chars.peek() == Some(&quote) {
                     let next1 = chars.next();
                     count += 1;
                     if chars.peek() == Some(&quote) {
                         let next2 = chars.next();
                         count += 1;
-                        
+
                         if count == 3 {
                             let has_assignment = result.trim_end().ends_with('=');
-                            
+
                             if has_assignment {
                                 for _ in 0..3 {
                                     result.push(quote);
@@ -230,35 +232,35 @@ fn clean_python_comments(content: &str) -> String {
 fn clean_html_comments(content: &str) -> String {
     let re = Regex::new(r"<!--[\s\S]*?-->").unwrap();
     let mut result = content.to_string();
-    
+
     let script_re = Regex::new(r"(?s)<script[^>]*>(.*?)</script>").unwrap();
     let style_re = Regex::new(r"(?s)<style[^>]*>(.*?)</style>").unwrap();
-    
+
     let mut scripts = Vec::new();
     let mut styles = Vec::new();
-    
+
     for cap in script_re.captures_iter(&result) {
         let script_content = cap.get(1).unwrap().as_str();
         let cleaned = clean_c_style_comments(script_content);
         scripts.push((script_content.to_string(), cleaned));
     }
-    
+
     for cap in style_re.captures_iter(&result) {
         let style_content = cap.get(1).unwrap().as_str();
         let cleaned = clean_css_comments(style_content);
         styles.push((style_content.to_string(), cleaned));
     }
-    
+
     result = re.replace_all(&result, "").to_string();
-    
+
     for (original, cleaned) in scripts {
         result = result.replace(&original, &cleaned);
     }
-    
+
     for (original, cleaned) in styles {
         result = result.replace(&original, &cleaned);
     }
-    
+
     result
 }
 

@@ -19,11 +19,10 @@ pub fn process(path: &Path, cli: &Cli) -> Result<()> {
 }
 
 fn process_directory(dir: &Path, cli: &Cli) -> Result<()> {
-    let extensions: Option<Vec<String>> = cli.extensions.as_ref().map(|exts| {
-        exts.split(',')
-            .map(|s| s.trim().to_string())
-            .collect()
-    });
+    let extensions: Option<Vec<String>> = cli
+        .extensions
+        .as_ref()
+        .map(|exts| exts.split(',').map(|s| s.trim().to_string()).collect());
 
     let walker = if cli.recursive {
         WalkDir::new(dir).into_iter()
@@ -36,7 +35,7 @@ fn process_directory(dir: &Path, cli: &Cli) -> Result<()> {
 
     for entry in walker.filter_map(|e| e.ok()) {
         let path = entry.path();
-        
+
         if !path.is_file() {
             continue;
         }
@@ -116,8 +115,8 @@ fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()>
         );
     }
 
-    let content = fs::read_to_string(file)
-        .context(format!("Cannot read file: {}", file.display()))?;
+    let content =
+        fs::read_to_string(file).context(format!("Cannot read file: {}", file.display()))?;
 
     let cleaned_content = cleaner::clean_comments(&content, language);
 
@@ -131,17 +130,15 @@ fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()>
     let output_path = determine_output_path(file, cli)?;
 
     if cli.backup && cli.in_place {
-        let backup_path = file.with_extension(
-            format!(
-                "{}.bak",
-                file.extension()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-            )
-        );
-        fs::copy(file, &backup_path)
-            .context(format!("Cannot create backup file: {}", backup_path.display()))?;
-        
+        let backup_path = file.with_extension(format!(
+            "{}.bak",
+            file.extension().and_then(|s| s.to_str()).unwrap_or("")
+        ));
+        fs::copy(file, &backup_path).context(format!(
+            "Cannot create backup file: {}",
+            backup_path.display()
+        ))?;
+
         if cli.verbose {
             println!("  {} {}", "Backup:".green(), backup_path.display());
         }
@@ -162,27 +159,25 @@ fn determine_output_path(file: &Path, cli: &Cli) -> Result<PathBuf> {
         Ok(file.to_path_buf())
     } else if let Some(ref output) = cli.output {
         if cli.recursive && output.is_dir() {
-            let file_name = file.file_name()
-                .context("Cannot get filename")?;
+            let file_name = file.file_name().context("Cannot get filename")?;
             Ok(output.join(file_name))
         } else {
             Ok(output.clone())
         }
     } else {
         let parent = file.parent().unwrap_or_else(|| Path::new("."));
-        let stem = file.file_stem()
+        let stem = file
+            .file_stem()
             .and_then(|s| s.to_str())
             .context("Cannot get filename")?;
-        let extension = file.extension()
-            .and_then(|s| s.to_str())
-            .unwrap_or("");
-        
+        let extension = file.extension().and_then(|s| s.to_str()).unwrap_or("");
+
         let output_name = if extension.is_empty() {
             format!("{}_cleaned", stem)
         } else {
             format!("{}_cleaned.{}", stem, extension)
         };
-        
+
         Ok(parent.join(output_name))
     }
 }

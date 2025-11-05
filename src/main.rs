@@ -15,10 +15,7 @@ use std::path::PathBuf;
     long_about = "A powerful command-line tool for automatically removing comments from code in multiple programming languages"
 )]
 struct Cli {
-    #[clap(
-        value_name = "PATH",
-        help = "File or directory path to process"
-    )]
+    #[clap(value_name = "PATH", help = "File or directory path to process")]
     path: PathBuf,
 
     #[clap(
@@ -43,11 +40,7 @@ struct Cli {
     )]
     in_place: bool,
 
-    #[clap(
-        short = 'b',
-        long = "backup",
-        help = "Create backup file (.bak)"
-    )]
+    #[clap(short = 'b', long = "backup", help = "Create backup file (.bak)")]
     backup: bool,
 
     #[clap(
@@ -58,17 +51,10 @@ struct Cli {
     )]
     language: Option<String>,
 
-    #[clap(
-        short = 'v',
-        long = "verbose",
-        help = "Show detailed information"
-    )]
+    #[clap(short = 'v', long = "verbose", help = "Show detailed information")]
     verbose: bool,
 
-    #[clap(
-        long = "dry-run",
-        help = "Dry run, do not actually modify files"
-    )]
+    #[clap(long = "dry-run", help = "Dry run, do not actually modify files")]
     dry_run: bool,
 
     #[clap(
