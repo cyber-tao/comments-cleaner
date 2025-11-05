@@ -62,7 +62,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            cclean-*
+            ${{ github.workspace }}/cclean-*
 
   publish-cargo:
     runs-on: ubuntu-latest
