@@ -39,12 +39,18 @@ jobs:
         shell: bash
         run: |
           cd target/${{ matrix.target }}/release
-          cp cclean ${{ matrix.name }}
-          mv ${{ matrix.name }} ../../../../
+          VERSION=${{ github.ref_name }}
+          if [[ "${{ matrix.target }}" == "x86_64-unknown-linux-gnu" ]]; then
+            OUTPUT_NAME="cclean-${VERSION}-linux-x86_64"
+          else
+            OUTPUT_NAME="cclean-${VERSION}-windows-x86_64.exe"
+          fi
+          cp cclean $OUTPUT_NAME
+          mv $OUTPUT_NAME ../../../../
           echo "Package binary completed, listing files:"
           ls -la ../../../../
           echo "Checking if file exists:"
-          test -f ../../../../${{ matrix.name }} && echo "File found" || echo "File not found"
+          test -f ../../../../$OUTPUT_NAME && echo "File found" || echo "File not found"
 
       - name: Create Release and Upload
         uses: softprops/action-gh-release@v1
@@ -56,7 +62,7 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            ${{ matrix.name }}
+            cclean-*
 
   publish-cargo:
     runs-on: ubuntu-latest
