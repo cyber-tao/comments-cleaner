@@ -163,25 +163,21 @@ fn clean_python_comments(content: &str) -> String {
                                 }
                                 while let Some(c) = chars.next() {
                                     result.push(c);
-                                    if c == quote {
+                                    if c == quote && chars.peek() == Some(&quote) {
+                                        result.push(chars.next().unwrap());
                                         if chars.peek() == Some(&quote) {
                                             result.push(chars.next().unwrap());
-                                            if chars.peek() == Some(&quote) {
-                                                result.push(chars.next().unwrap());
-                                                break;
-                                            }
+                                            break;
                                         }
                                     }
                                 }
                             } else {
                                 while let Some(c) = chars.next() {
-                                    if c == quote {
+                                    if c == quote && chars.peek() == Some(&quote) {
+                                        chars.next();
                                         if chars.peek() == Some(&quote) {
                                             chars.next();
-                                            if chars.peek() == Some(&quote) {
-                                                chars.next();
-                                                break;
-                                            }
+                                            break;
                                         }
                                     }
                                 }
