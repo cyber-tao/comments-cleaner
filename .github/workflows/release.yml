@@ -40,7 +40,8 @@ jobs:
         run: |
           cd target/${{ matrix.target }}/release
           cp cclean ${{ matrix.name }}
-          tar -czf ../../../../${{ matrix.name }}.tar.gz ${{ matrix.name }}
+          tar -czf ${{ matrix.name }}.tar.gz ${{ matrix.name }}
+          mv ${{ matrix.name }}.tar.gz ../../../../
 
       - name: Create Release and Upload
         uses: softprops/action-gh-release@v1
