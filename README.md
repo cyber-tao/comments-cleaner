@@ -24,9 +24,9 @@ A powerful command-line tool for automatically removing comments from code in mu
 | Python     | `.py`, `.pyw`                               | `#` and `"""..."""` / `'''...'''` |
 | HTML       | `.html`, `.htm`                             | `<!-- -->`                            |
 | CSS        | `.css`                                        | `/* */`                               |
-| PHP        | `.php`                                        | `//`, `#` and `/* */`              |
+| PHP        | `.php`                                        | `//`, `#` and `/* */`             |
 | Rust       | `.rs`                                         | `//` and `/* */`                    |
-| Basic      | `.vb`, `.bas`, `.vba`, `.vbs`         | `'` and `REM`                       |
+| Basic      | `.vb`, `.bas`, `.vba`, `.vbs`           | `'` and `REM`                       |
 
 ## Installation
 
@@ -241,13 +241,3 @@ MIT License
 ## Contributing
 
 Issues and Pull Requests are welcome!
-
-## Changelog
-
-### v0.1.0
-
-- Initial version
-- Support for C/C++, Java, JavaScript, TypeScript, Python, HTML, CSS, PHP, Rust, Basic
-- Basic command-line arguments
-- Single file and directory processing
-- Backup and in-place modification features
