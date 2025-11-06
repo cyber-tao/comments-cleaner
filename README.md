@@ -1,5 +1,13 @@
 # Code Comment Cleaning Tool (Comments Cleaner)
 
+[![GitHub stars](https://img.shields.io/github/stars/cyber-tao/comments-cleaner?style=flat-square)](https://github.com/cyber-tao/comments-cleaner/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/cyber-tao/comments-cleaner?style=flat-square)](https://github.com/cyber-tao/comments-cleaner/network)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Crates.io](https://img.shields.io/crates/v/comments-cleaner?style=flat-square)](https://crates.io/crates/comments-cleaner)
+[![Crates.io downloads](https://img.shields.io/crates/d/comments-cleaner?style=flat-square)](https://crates.io/crates/comments-cleaner)
+[![CI](https://img.shields.io/github/actions/workflow/status/cyber-tao/comments-cleaner/ci.yml?branch=master&style=flat-square)](https://github.com/cyber-tao/comments-cleaner/actions)
+[![Rust](https://img.shields.io/badge/rust-1.70%2B-orange.svg?style=flat-square)](https://www.rust-lang.org/)
+
 A powerful command-line tool for automatically removing comments from code in multiple programming languages.
 
 ## Features
