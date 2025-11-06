@@ -10,6 +10,9 @@ pub enum Language {
     Python,
     Html,
     Css,
+    Php,
+    Rust,
+    Basic,
 }
 
 impl Language {
@@ -23,6 +26,9 @@ impl Language {
             "py" | "pyw" => Some(Language::Python),
             "html" | "htm" => Some(Language::Html),
             "css" => Some(Language::Css),
+            "php" => Some(Language::Php),
+            "rs" => Some(Language::Rust),
+            "vb" | "bas" | "vba" | "vbs" => Some(Language::Basic),
             _ => None,
         }
     }
@@ -43,6 +49,9 @@ impl Language {
             "python" | "py" => Some(Language::Python),
             "html" => Some(Language::Html),
             "css" => Some(Language::Css),
+            "php" => Some(Language::Php),
+            "rust" | "rs" => Some(Language::Rust),
+            "basic" | "vb" | "vba" | "vbs" => Some(Language::Basic),
             _ => None,
         }
     }
@@ -57,6 +66,9 @@ impl Language {
             Language::Python => "Python",
             Language::Html => "HTML",
             Language::Css => "CSS",
+            Language::Php => "PHP",
+            Language::Rust => "Rust",
+            Language::Basic => "Basic",
         }
     }
 }

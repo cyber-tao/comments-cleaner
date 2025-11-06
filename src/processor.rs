@@ -59,13 +59,11 @@ fn process_directory(dir: &Path, cli: &Cli) -> Result<()> {
         };
 
         if language.is_none() {
-            if cli.verbose {
-                println!(
-                    "{} {}",
-                    "Skipping:".yellow(),
-                    path.display().to_string().dimmed()
-                );
-            }
+            println!(
+                "{} {}",
+                "Skipping:".yellow(),
+                path.display().to_string().dimmed()
+            );
             skipped_count += 1;
             continue;
         }
@@ -80,15 +78,13 @@ fn process_directory(dir: &Path, cli: &Cli) -> Result<()> {
         }
     }
 
-    if cli.verbose {
-        println!(
-            "\n{} {} files, {} {} files",
-            "Processed".green(),
-            processed_count,
-            "skipped".yellow(),
-            skipped_count
-        );
-    }
+    println!(
+        "\n{} {} files, {} {} files",
+        "Processed".green(),
+        processed_count,
+        "skipped".yellow(),
+        skipped_count
+    );
 
     Ok(())
 }
@@ -106,14 +102,12 @@ fn process_file(file: &Path, cli: &Cli) -> Result<()> {
 }
 
 fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()> {
-    if cli.verbose {
-        println!(
-            "{} {} ({})",
-            "Processing:".cyan(),
-            file.display(),
-            language.name().yellow()
-        );
-    }
+    println!(
+        "{} {} ({})",
+        "Processing:".cyan(),
+        file.display(),
+        language.name().yellow()
+    );
 
     let content =
         fs::read_to_string(file).context(format!("Cannot read file: {}", file.display()))?;
@@ -121,9 +115,7 @@ fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()>
     let cleaned_content = cleaner::clean_comments(&content, language);
 
     if cli.dry_run {
-        if cli.verbose {
-            println!("{}", "  [Dry run - file not modified]".dimmed());
-        }
+        println!("{}", "  [Dry run - file not modified]".dimmed());
         return Ok(());
     }
 
@@ -139,17 +131,13 @@ fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()>
             backup_path.display()
         ))?;
 
-        if cli.verbose {
-            println!("  {} {}", "Backup:".green(), backup_path.display());
-        }
+        println!("  {} {}", "Backup:".green(), backup_path.display());
     }
 
     fs::write(&output_path, cleaned_content)
         .context(format!("Cannot write file: {}", output_path.display()))?;
 
-    if cli.verbose {
-        println!("  {} {}", "Output:".green(), output_path.display());
-    }
+    println!("  {} {}", "Output:".green(), output_path.display());
 
     Ok(())
 }

@@ -11,12 +11,12 @@ use std::path::PathBuf;
 #[clap(
     name = "cclean",
     version = "0.1.0",
-    about = "Code comment cleaning tool - supports C/C++, Java/JavaScript/TypeScript, Python, HTML/CSS",
+    about = "Code comment cleaning tool - supports C/C++, Java/JavaScript/TypeScript, Python, HTML/CSS, PHP, Rust, Basic",
     long_about = "A powerful command-line tool for automatically removing comments from code in multiple programming languages"
 )]
 struct Cli {
     #[clap(value_name = "PATH", help = "File or directory path to process")]
-    path: PathBuf,
+    path: Option<PathBuf>,
 
     #[clap(
         short = 'o',
@@ -47,12 +47,9 @@ struct Cli {
         short = 'l',
         long = "lang",
         value_name = "LANGUAGE",
-        help = "Manually specify programming language (c, cpp, java, js, ts, python, html, css)"
+        help = "Manually specify programming language (c, cpp, java, js, ts, python, html, css, php, rust, basic)"
     )]
     language: Option<String>,
-
-    #[clap(short = 'v', long = "verbose", help = "Show detailed information")]
-    verbose: bool,
 
     #[clap(long = "dry-run", help = "Dry run, do not actually modify files")]
     dry_run: bool,
@@ -69,16 +66,20 @@ struct Cli {
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    if cli.verbose {
-        println!("{}", "Code Comment Cleaning Tool v0.1.0".cyan().bold());
-        println!("{}", "=".repeat(50).cyan());
-    }
+    let path = match &cli.path {
+        Some(p) => p,
+        None => {
+            Cli::parse_from(&["cclean", "--help"]);
+            return Ok(());
+        }
+    };
 
-    processor::process(&cli.path, &cli)?;
+    println!("{}", "Code Comment Cleaning Tool v0.1.0".cyan().bold());
+    println!("{}", "=".repeat(50).cyan());
 
-    if cli.verbose {
-        println!("{}", "\nProcessing completed!".green().bold());
-    }
+    processor::process(path, &cli)?;
+
+    println!("{}", "\nProcessing completed!".green().bold());
 
     Ok(())
 }
@@ -91,7 +92,6 @@ pub fn get_cli_config() -> CliConfig {
         in_place: cli.in_place,
         backup: cli.backup,
         language: cli.language,
-        verbose: cli.verbose,
         dry_run: cli.dry_run,
         extensions: cli.extensions,
     }
@@ -103,7 +103,6 @@ pub struct CliConfig {
     pub in_place: bool,
     pub backup: bool,
     pub language: Option<String>,
-    pub verbose: bool,
     pub dry_run: bool,
     pub extensions: Option<String>,
 }
@@ -116,7 +115,6 @@ impl From<&Cli> for CliConfig {
             in_place: cli.in_place,
             backup: cli.backup,
             language: cli.language.clone(),
-            verbose: cli.verbose,
             dry_run: cli.dry_run,
             extensions: cli.extensions.clone(),
         }

@@ -4,7 +4,7 @@ A powerful command-line tool for automatically removing comments from code in mu
 
 ## Features
 
-- 🚀 **Multi-language support**: C/C++, Java, JavaScript, TypeScript, Python, HTML, CSS
+- 🚀 **Multi-language support**: C/C++, Java, JavaScript, TypeScript, Python, HTML, CSS, PHP, Rust, Basic
 - 🔍 **Auto-detection**: Automatically recognizes programming language based on file extension
 - 📁 **Batch processing**: Supports single file and recursive directory processing
 - 💾 **Flexible output**: Supports in-place modification, specified output path, automatic backup
@@ -24,6 +24,9 @@ A powerful command-line tool for automatically removing comments from code in mu
 | Python     | `.py`, `.pyw`                               | `#` and `"""..."""` / `'''...'''` |
 | HTML       | `.html`, `.htm`                             | `<!-- -->`                            |
 | CSS        | `.css`                                        | `/* */`                               |
+| PHP        | `.php`                                        | `//`, `#` and `/* */`              |
+| Rust       | `.rs`                                         | `//` and `/* */`                    |
+| Basic      | `.vb`, `.bas`, `.vba`, `.vbs`         | `'` and `REM`                       |
 
 ## Installation
 
@@ -116,13 +119,7 @@ cclean script.txt -l cpp -o script_cleaned.txt
 #### 9. Dry run (no actual modification)
 
 ```bash
-cclean src/ -r --dry-run -v
-```
-
-#### 10. Verbose mode
-
-```bash
-cclean src/ -r -i -v
+cclean src/ -r --dry-run
 ```
 
 ## Command-line Options
@@ -134,7 +131,6 @@ cclean src/ -r -i -v
 | `--in-place`         | `-i` | Modify original file directly                        |
 | `--backup`           | `-b` | Create backup file (.bak)                            |
 | `--lang <LANGUAGE>`  | `-l` | Manually specify programming language                |
-| `--verbose`          | `-v` | Show detailed processing information                 |
 | `--dry-run`          |        | Dry run, do not actually modify files                |
 | `--extensions <EXT>` | `-e` | Specify file extensions to process (comma-separated) |
 | `--help`             | `-h` | Show help information                                |
@@ -152,6 +148,9 @@ When using `-l` or `--lang` option, you can use the following language identifie
 - `python` or `py`: Python
 - `html`: HTML
 - `css`: CSS
+- `php`: PHP
+- `rust` or `rs`: Rust
+- `basic`, `vb`, `vba`, or `vbs`: Basic
 
 ## Important Notes
 
@@ -165,13 +164,13 @@ When using `-l` or `--lang` option, you can use the following language identifie
 ### Scenario 1: Clean comments for entire project
 
 ```bash
-cclean ./project -r -o ./project_cleaned -v
+cclean ./project -r -o ./project_cleaned
 ```
 
 ### Scenario 2: Clean code before release
 
 ```bash
-cclean ./src -r -i -b -v
+cclean ./src -r -i -b
 ```
 
 This will:
@@ -191,10 +190,12 @@ cclean ./src -r -e "js,jsx" -o ./dist
 
 ### Comment Processing Rules
 
-- **C/C++/Java/JS/TS**: Remove `//` single-line comments and `/* */` multi-line comments
+- **C/C++/Java/JS/TS/Rust**: Remove `//` single-line comments and `/* */` multi-line comments
 - **Python**: Remove `#` comments and triple-quoted strings `"""..."""` / `'''...'''` (including docstrings, replaced with empty string `""`)
 - **HTML**: Remove `<!-- -->` comments, also process comments in embedded `<script>` and `<style>` tags
 - **CSS**: Remove `/* */` comments
+- **PHP**: Remove `//` single-line comments, `#` comments, and `/* */` multi-line comments
+- **Basic**: Remove `'` single-line comments and `REM` keyword comments
 
 ### Whitespace Handling
 
@@ -230,7 +231,7 @@ cargo run -- <arguments>
 Example:
 
 ```bash
-cargo run -- test.cpp -v
+cargo run -- test.cpp
 ```
 
 ## License
@@ -246,7 +247,7 @@ Issues and Pull Requests are welcome!
 ### v0.1.0
 
 - Initial version
-- Support for C/C++, Java, JavaScript, TypeScript, Python, HTML, CSS
+- Support for C/C++, Java, JavaScript, TypeScript, Python, HTML, CSS, PHP, Rust, Basic
 - Basic command-line arguments
 - Single file and directory processing
 - Backup and in-place modification features

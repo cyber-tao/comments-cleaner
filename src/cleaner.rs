@@ -7,10 +7,13 @@ pub fn clean_comments(content: &str, language: Language) -> String {
         | Language::Cpp
         | Language::Java
         | Language::JavaScript
-        | Language::TypeScript => clean_c_style_comments(content),
+        | Language::TypeScript
+        | Language::Rust => clean_c_style_comments(content),
         Language::Python => clean_python_comments(content),
         Language::Html => clean_html_comments(content),
         Language::Css => clean_css_comments(content),
+        Language::Php => clean_php_comments(content),
+        Language::Basic => clean_basic_comments(content),
     };
 
     clean_empty_lines(&cleaned)
@@ -304,6 +307,167 @@ fn clean_css_comments(content: &str) -> String {
                         continue;
                     }
                 }
+            }
+        } else if ch == string_delimiter {
+            in_string = false;
+            result.push(ch);
+            continue;
+        }
+
+        result.push(ch);
+    }
+
+    result
+}
+
+fn clean_php_comments(content: &str) -> String {
+    let mut result = String::new();
+    let mut chars = content.chars().peekable();
+    let mut in_string = false;
+    let mut in_char = false;
+    let mut string_delimiter = '"';
+    let mut escape_next = false;
+
+    while let Some(ch) = chars.next() {
+        if escape_next {
+            if !in_string && !in_char {
+                result.push('\\');
+            }
+            if in_string || in_char {
+                result.push('\\');
+                result.push(ch);
+            }
+            escape_next = false;
+            continue;
+        }
+
+        if ch == '\\' {
+            escape_next = true;
+            continue;
+        }
+
+        if !in_string && !in_char {
+            if ch == '"' {
+                in_string = true;
+                string_delimiter = '"';
+                result.push(ch);
+                continue;
+            } else if ch == '\'' {
+                in_char = true;
+                result.push(ch);
+                continue;
+            }
+
+            if ch == '/' {
+                if let Some(&next_ch) = chars.peek() {
+                    if next_ch == '/' {
+                        chars.next();
+                        while let Some(&c) = chars.peek() {
+                            if c == '\n' {
+                                break;
+                            }
+                            chars.next();
+                        }
+                        continue;
+                    } else if next_ch == '*' {
+                        chars.next();
+                        let mut prev = '*';
+                        while let Some(c) = chars.next() {
+                            if prev == '*' && c == '/' {
+                                break;
+                            }
+                            prev = c;
+                        }
+                        continue;
+                    }
+                }
+            }
+
+            if ch == '#' {
+                while let Some(&c) = chars.peek() {
+                    if c == '\n' {
+                        break;
+                    }
+                    chars.next();
+                }
+                continue;
+            }
+        } else if in_string && ch == string_delimiter {
+            in_string = false;
+            result.push(ch);
+            continue;
+        } else if in_char && ch == '\'' {
+            in_char = false;
+            result.push(ch);
+            continue;
+        }
+
+        result.push(ch);
+    }
+
+    result
+}
+
+fn clean_basic_comments(content: &str) -> String {
+    let mut result = String::new();
+    let mut chars = content.chars().peekable();
+    let mut in_string = false;
+    let mut string_delimiter = '"';
+
+    while let Some(ch) = chars.next() {
+        if !in_string {
+            if ch == '"' {
+                in_string = true;
+                string_delimiter = '"';
+                result.push(ch);
+                continue;
+            }
+
+            if ch == '\'' {
+                while let Some(&c) = chars.peek() {
+                    if c == '\n' {
+                        break;
+                    }
+                    chars.next();
+                }
+                continue;
+            }
+
+            if ch == 'R' || ch == 'r' {
+                let mut temp = String::new();
+                temp.push(ch);
+                
+                let mut matched = true;
+                for expected in ['E', 'M'] {
+                    if let Some(&next_ch) = chars.peek() {
+                        if next_ch.to_ascii_uppercase() == expected {
+                            temp.push(chars.next().unwrap());
+                        } else {
+                            matched = false;
+                            break;
+                        }
+                    } else {
+                        matched = false;
+                        break;
+                    }
+                }
+
+                if matched {
+                    if let Some(&next_ch) = chars.peek() {
+                        if next_ch.is_whitespace() || next_ch == '\n' {
+                            while let Some(&c) = chars.peek() {
+                                if c == '\n' {
+                                    break;
+                                }
+                                chars.next();
+                            }
+                            continue;
+                        }
+                    }
+                }
+
+                result.push_str(&temp);
+                continue;
             }
         } else if ch == string_delimiter {
             in_string = false;
