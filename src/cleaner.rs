@@ -52,22 +52,65 @@ fn clean_c_style_comments(content: &str) -> String {
     let mut in_char = false;
     let mut string_delimiter = '"';
     let mut escape_next = false;
+    let mut in_regex = false;
+    let mut regex_escape_next = false;
+    let mut in_regex_char_class = false;
+    let mut prev_non_ws: Option<char> = None;
+    let mut in_template = false;
 
     while let Some(ch) = chars.next() {
         if escape_next {
-            if !in_string && !in_char {
-                result.push('\\');
-            }
-            if in_string || in_char {
-                result.push('\\');
-                result.push(ch);
-            }
+            result.push('\\');
+            result.push(ch);
             escape_next = false;
             continue;
         }
 
         if ch == '\\' {
-            escape_next = true;
+            if in_string || in_char || in_template {
+                escape_next = true;
+                continue;
+            }
+            if in_regex {
+                regex_escape_next = true;
+                result.push(ch);
+                continue;
+            }
+            result.push(ch);
+            if !ch.is_whitespace() { prev_non_ws = Some(ch); }
+            continue;
+        }
+
+        if in_template {
+            result.push(ch);
+            if escape_next {
+                escape_next = false;
+                if !ch.is_whitespace() { prev_non_ws = Some(ch); }
+                continue;
+            }
+            if ch == '`' {
+                in_template = false;
+                if !ch.is_whitespace() { prev_non_ws = Some(ch); }
+                continue;
+            }
+            if !ch.is_whitespace() { prev_non_ws = Some(ch); }
+            continue;
+        }
+
+        if in_regex {
+            result.push(ch);
+            if regex_escape_next {
+                regex_escape_next = false;
+            } else {
+                if ch == '[' { in_regex_char_class = true; }
+                else if ch == ']' { in_regex_char_class = false; }
+                else if ch == '/' && !in_regex_char_class {
+                    in_regex = false;
+                } else if ch == '\\' {
+                    regex_escape_next = true;
+                }
+            }
+            if !ch.is_whitespace() { prev_non_ws = Some(ch); }
             continue;
         }
 
@@ -79,6 +122,10 @@ fn clean_c_style_comments(content: &str) -> String {
                 continue;
             } else if ch == '\'' {
                 in_char = true;
+                result.push(ch);
+                continue;
+            } else if ch == '`' {
+                in_template = true;
                 result.push(ch);
                 continue;
             }
@@ -104,6 +151,20 @@ fn clean_c_style_comments(content: &str) -> String {
                             prev = c;
                         }
                         continue;
+                    } else if next_ch != '=' {
+                        let prev = prev_non_ws;
+                        let likely_regex_start = match prev {
+                            None => true,
+                            Some(p) => {
+                                !(p.is_ascii_alphanumeric() || p == ')' || p == ']' || p == '}' || p == '.')
+                            }
+                        };
+                        if likely_regex_start {
+                            in_regex = true;
+                            result.push(ch);
+                            if !ch.is_whitespace() { prev_non_ws = Some(ch); }
+                            continue;
+                        }
                     }
                 }
             }
@@ -118,6 +179,7 @@ fn clean_c_style_comments(content: &str) -> String {
         }
 
         result.push(ch);
+        if !ch.is_whitespace() { prev_non_ws = Some(ch); }
     }
 
     result
@@ -511,5 +573,33 @@ mod tests {
         let input = r#"String s = "// not a comment";"#;
         let output = clean_c_style_comments(input);
         assert!(output.contains("// not a comment"));
+    }
+
+    #[test]
+    fn test_js_regex_preserve_escape() {
+        let input = r#"const re = /[^\d]/g;"#;
+        let output = clean_c_style_comments(input);
+        assert!(output.contains(r"/[^\d]/g"));
+    }
+
+    #[test]
+    fn test_js_regex_with_double_slash() {
+        let input = r#"const re = /https?:\/\/[^\s]+/;"#;
+        let output = clean_c_style_comments(input);
+        assert!(output.contains(r"/https?:\/\/[^\s]+/"));
+    }
+
+    #[test]
+    fn test_js_regex_with_comment_markers() {
+        let input = r#"const re = /\/\*[^]*\*\//;"#;
+        let output = clean_c_style_comments(input);
+        assert!(output.contains(r"/\/\*[^]*\*\//"));
+    }
+
+    #[test]
+    fn test_js_template_string_with_url() {
+        let input = r#"const apiUrl = `https://example.com/path?x=${1+2}`;"#;
+        let output = clean_c_style_comments(input);
+        assert!(output.contains("`https://example.com/path?x=${1+2}`"));
     }
 }
