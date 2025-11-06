@@ -27,6 +27,14 @@ A powerful command-line tool for automatically removing comments from code in mu
 
 ## Installation
 
+### Download pre-built binaries
+
+You can download the latest pre-built executable from the [Releases](https://github.com/cyber-tao/CommentsCleaner/releases) page.
+
+1. Go to the [Releases page](https://github.com/cyber-tao/CommentsCleaner/releases)
+2. Download the appropriate binary for your operating system
+3. Extract the executable and add it to your system PATH (optional)
+
 ### Build from source
 
 ```bash
