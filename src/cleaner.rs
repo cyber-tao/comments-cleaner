@@ -1,5 +1,5 @@
+use crate::constants;
 use crate::language::Language;
-use regex::Regex;
 
 pub fn clean_comments(content: &str, language: Language) -> String {
     let cleaned = match language {
@@ -38,8 +38,16 @@ fn clean_empty_lines(content: &str) -> String {
         }
     }
 
-    let mut output = result.join("\n");
-    if content.ends_with('\n') {
+    let line_ending = if content.contains("\r\n") {
+        "\r\n"
+    } else {
+        "\n"
+    };
+    let mut output = result.join(line_ending);
+
+    if content.ends_with("\r\n") {
+        output.push_str("\r\n");
+    } else if content.ends_with('\n') {
         output.push('\n');
     }
     output
@@ -240,30 +248,18 @@ fn clean_python_comments(content: &str) -> String {
                         count += 1;
 
                         if count == 3 {
-                            let has_assignment = result.trim_end().ends_with('=');
+                            // Preserve triple quoted strings
+                            result.push(quote);
+                            result.push(next1.unwrap());
+                            result.push(next2.unwrap());
 
-                            if has_assignment {
-                                for _ in 0..3 {
-                                    result.push(quote);
-                                }
-                                while let Some(c) = chars.next() {
-                                    result.push(c);
-                                    if c == quote && chars.peek() == Some(&quote) {
+                            while let Some(c) = chars.next() {
+                                result.push(c);
+                                if c == quote && chars.peek() == Some(&quote) {
+                                    result.push(chars.next().unwrap());
+                                    if chars.peek() == Some(&quote) {
                                         result.push(chars.next().unwrap());
-                                        if chars.peek() == Some(&quote) {
-                                            result.push(chars.next().unwrap());
-                                            break;
-                                        }
-                                    }
-                                }
-                            } else {
-                                while let Some(c) = chars.next() {
-                                    if c == quote && chars.peek() == Some(&quote) {
-                                        chars.next();
-                                        if chars.peek() == Some(&quote) {
-                                            chars.next();
-                                            break;
-                                        }
+                                        break;
                                     }
                                 }
                             }
@@ -311,11 +307,11 @@ fn clean_python_comments(content: &str) -> String {
 }
 
 fn clean_html_comments(content: &str) -> String {
-    let re = Regex::new(r"<!--[\s\S]*?-->").unwrap();
+    let re = constants::html_comment_regex();
     let mut result = content.to_string();
 
-    let script_re = Regex::new(r"(?s)<script[^>]*>(.*?)</script>").unwrap();
-    let style_re = Regex::new(r"(?s)<style[^>]*>(.*?)</style>").unwrap();
+    let script_re = constants::script_tag_regex();
+    let style_re = constants::style_tag_regex();
 
     let mut scripts = Vec::new();
     let mut styles = Vec::new();
@@ -585,6 +581,14 @@ mod tests {
     fn test_python_comment() {
         let input = "x = 5  # this is a comment\ny = 10";
         let expected = "x = 5  \ny = 10";
+        assert_eq!(clean_python_comments(input), expected);
+    }
+
+    #[test]
+    fn test_python_triple_quote_preserve() {
+        let input = "def foo():\n    \"\"\"This is a docstring\"\"\"\n    print(\"\"\"Hello\"\"\")";
+        let expected =
+            "def foo():\n    \"\"\"This is a docstring\"\"\"\n    print(\"\"\"Hello\"\"\")";
         assert_eq!(clean_python_comments(input), expected);
     }
 

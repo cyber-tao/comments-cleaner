@@ -1,22 +1,23 @@
 mod cleaner;
+mod constants;
 mod language;
+mod logger;
 mod processor;
 
 use anyhow::Result;
 use clap::Parser;
-use colored::*;
 use std::path::PathBuf;
 
 #[derive(Parser)]
 #[clap(
     name = "cclean",
-    version = "0.1.0",
+    version = env!("CARGO_PKG_VERSION"),
     about = "Code comment cleaning tool - supports C/C++, Java/JavaScript/TypeScript, Python, HTML/CSS, PHP, Rust, Basic",
     long_about = "A powerful command-line tool for automatically removing comments from code in multiple programming languages"
 )]
-struct Cli {
+pub struct Cli {
     #[clap(value_name = "PATH", help = "File or directory path to process")]
-    path: Option<PathBuf>,
+    pub path: PathBuf,
 
     #[clap(
         short = 'o',
@@ -24,24 +25,24 @@ struct Cli {
         value_name = "OUTPUT",
         help = "Output file path (single file mode) or output directory (directory mode)"
     )]
-    output: Option<PathBuf>,
+    pub output: Option<PathBuf>,
 
     #[clap(
         short = 'r',
         long = "recursive",
         help = "Recursively process all files in directory"
     )]
-    recursive: bool,
+    pub recursive: bool,
 
     #[clap(
         short = 'i',
         long = "in-place",
         help = "Modify original file directly (no backup)"
     )]
-    in_place: bool,
+    pub in_place: bool,
 
     #[clap(short = 'b', long = "backup", help = "Create backup file (.bak)")]
-    backup: bool,
+    pub backup: bool,
 
     #[clap(
         short = 'l',
@@ -49,10 +50,10 @@ struct Cli {
         value_name = "LANGUAGE",
         help = "Manually specify programming language (c, cpp, java, js, ts, python, html, css, php, rust, basic)"
     )]
-    language: Option<String>,
+    pub language: Option<String>,
 
     #[clap(long = "dry-run", help = "Dry run, do not actually modify files")]
-    dry_run: bool,
+    pub dry_run: bool,
 
     #[clap(
         short = 'e',
@@ -60,63 +61,17 @@ struct Cli {
         value_name = "EXT",
         help = "Specify file extensions to process (comma-separated, e.g.: c,cpp,h)"
     )]
-    extensions: Option<String>,
+    pub extensions: Option<String>,
 }
 
 fn main() -> Result<()> {
     let cli = Cli::parse();
 
-    let path = match &cli.path {
-        Some(p) => p,
-        None => {
-            Cli::parse_from(&["cclean", "--help"]);
-            return Ok(());
-        }
-    };
+    logger::print_header(constants::APP_NAME, constants::APP_VERSION);
 
-    println!("{}", "Code Comment Cleaning Tool v0.1.0".cyan().bold());
-    println!("{}", "=".repeat(50).cyan());
+    processor::process(&cli.path, &cli)?;
 
-    processor::process(path, &cli)?;
-
-    println!("{}", "\nProcessing completed!".green().bold());
+    logger::success(constants::MSG_PROCESSING_COMPLETED);
 
     Ok(())
-}
-
-pub fn get_cli_config() -> CliConfig {
-    let cli = Cli::parse();
-    CliConfig {
-        output: cli.output,
-        recursive: cli.recursive,
-        in_place: cli.in_place,
-        backup: cli.backup,
-        language: cli.language,
-        dry_run: cli.dry_run,
-        extensions: cli.extensions,
-    }
-}
-
-pub struct CliConfig {
-    pub output: Option<PathBuf>,
-    pub recursive: bool,
-    pub in_place: bool,
-    pub backup: bool,
-    pub language: Option<String>,
-    pub dry_run: bool,
-    pub extensions: Option<String>,
-}
-
-impl From<&Cli> for CliConfig {
-    fn from(cli: &Cli) -> Self {
-        CliConfig {
-            output: cli.output.clone(),
-            recursive: cli.recursive,
-            in_place: cli.in_place,
-            backup: cli.backup,
-            language: cli.language.clone(),
-            dry_run: cli.dry_run,
-            extensions: cli.extensions.clone(),
-        }
-    }
 }

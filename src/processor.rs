@@ -1,8 +1,9 @@
 use crate::cleaner;
+use crate::constants;
 use crate::language::Language;
+use crate::logger;
 use crate::Cli;
 use anyhow::{Context, Result};
-use colored::*;
 use std::fs;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -13,7 +14,7 @@ pub fn process(path: &Path, cli: &Cli) -> Result<()> {
     } else if path.is_dir() {
         process_directory(path, cli)?;
     } else {
-        anyhow::bail!("Path does not exist: {}", path.display());
+        anyhow::bail!("{} {}", constants::ERR_PATH_NOT_EXIST, path.display());
     }
     Ok(())
 }
@@ -59,67 +60,64 @@ fn process_directory(dir: &Path, cli: &Cli) -> Result<()> {
         };
 
         if language.is_none() {
-            println!(
-                "{} {}",
-                "Skipping:".yellow(),
-                path.display().to_string().dimmed()
-            );
+            logger::log_skip(&path.display().to_string());
             skipped_count += 1;
             continue;
         }
 
-        match process_single_file(path, cli, language.unwrap()) {
+        match process_single_file(path, Some(dir), cli, language.unwrap()) {
             Ok(_) => {
                 processed_count += 1;
             }
             Err(e) => {
-                eprintln!("{} {}: {}", "Error:".red(), path.display(), e);
+                logger::error_msg(&format!("{}: {}", path.display(), e));
             }
         }
     }
 
-    println!(
-        "\n{} {} files, {} {} files",
-        "Processed".green(),
-        processed_count,
-        "skipped".yellow(),
-        skipped_count
-    );
+    logger::log_summary(processed_count, skipped_count);
 
     Ok(())
 }
 
 fn process_file(file: &Path, cli: &Cli) -> Result<()> {
     let language = if let Some(ref lang_str) = cli.language {
-        Language::from_str(lang_str)
-            .context("Cannot recognize the specified programming language")?
+        Language::from_str(lang_str).context(constants::ERR_UNRECOGNIZED_LANG_CLI)?
     } else {
-        Language::from_path(file)
-            .context("Cannot recognize programming language from file extension, please use -l parameter to specify manually")?
+        Language::from_path(file).context(constants::ERR_UNRECOGNIZED_LANG_EXT)?
     };
 
-    process_single_file(file, cli, language)
+    process_single_file(file, None, cli, language)
 }
 
-fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()> {
-    println!(
-        "{} {} ({})",
-        "Processing:".cyan(),
-        file.display(),
-        language.name().yellow()
-    );
+fn process_single_file(
+    file: &Path,
+    base_dir: Option<&Path>,
+    cli: &Cli,
+    language: Language,
+) -> Result<()> {
+    logger::log_processing(&file.display().to_string(), language.name());
 
-    let content =
-        fs::read_to_string(file).context(format!("Cannot read file: {}", file.display()))?;
+    let content = fs::read_to_string(file).context(format!(
+        "{} {}",
+        constants::ERR_READ_FILE,
+        file.display()
+    ))?;
 
     let cleaned_content = cleaner::clean_comments(&content, language);
 
     if cli.dry_run {
-        println!("{}", "  [Dry run - file not modified]".dimmed());
+        logger::log_dry_run();
         return Ok(());
     }
 
-    let output_path = determine_output_path(file, cli)?;
+    let output_path = determine_output_path(file, base_dir, cli)?;
+
+    if let Some(parent) = output_path.parent() {
+        if !parent.exists() {
+            fs::create_dir_all(parent)?;
+        }
+    }
 
     if cli.backup && cli.in_place {
         let backup_path = file.with_extension(format!(
@@ -127,28 +125,37 @@ fn process_single_file(file: &Path, cli: &Cli, language: Language) -> Result<()>
             file.extension().and_then(|s| s.to_str()).unwrap_or("")
         ));
         fs::copy(file, &backup_path).context(format!(
-            "Cannot create backup file: {}",
+            "{} {}",
+            constants::ERR_CREATE_BACKUP,
             backup_path.display()
         ))?;
 
-        println!("  {} {}", "Backup:".green(), backup_path.display());
+        logger::log_backup(&backup_path.display().to_string());
     }
 
-    fs::write(&output_path, cleaned_content)
-        .context(format!("Cannot write file: {}", output_path.display()))?;
+    fs::write(&output_path, cleaned_content).context(format!(
+        "{} {}",
+        constants::ERR_WRITE_FILE,
+        output_path.display()
+    ))?;
 
-    println!("  {} {}", "Output:".green(), output_path.display());
+    logger::log_output(&output_path.display().to_string());
 
     Ok(())
 }
 
-fn determine_output_path(file: &Path, cli: &Cli) -> Result<PathBuf> {
+fn determine_output_path(file: &Path, base_dir: Option<&Path>, cli: &Cli) -> Result<PathBuf> {
     if cli.in_place {
         Ok(file.to_path_buf())
     } else if let Some(ref output) = cli.output {
-        if cli.recursive && output.is_dir() {
-            let file_name = file.file_name().context("Cannot get filename")?;
-            Ok(output.join(file_name))
+        if cli.recursive {
+            if let Some(base) = base_dir {
+                let rel_path = file.strip_prefix(base).unwrap_or(file);
+                Ok(output.join(rel_path))
+            } else {
+                let file_name = file.file_name().context(constants::ERR_GET_FILENAME)?;
+                Ok(output.join(file_name))
+            }
         } else {
             Ok(output.clone())
         }
@@ -157,7 +164,7 @@ fn determine_output_path(file: &Path, cli: &Cli) -> Result<PathBuf> {
         let stem = file
             .file_stem()
             .and_then(|s| s.to_str())
-            .context("Cannot get filename")?;
+            .context(constants::ERR_GET_FILENAME)?;
         let extension = file.extension().and_then(|s| s.to_str()).unwrap_or("");
 
         let output_name = if extension.is_empty() {
